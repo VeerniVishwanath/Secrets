@@ -1,5 +1,6 @@
 const express = require("express");
 const ejs = require("ejs");
+const mongoose = require("mongoose");
 
 const app = express();
 
@@ -12,21 +13,32 @@ app.use(express.static("public"));
 //Setting View Engine to use EJS
 app.set("view engine", "ejs");
 
-//Render Home Page
-app.get("/", (req, res) => {
-  res.render("home");
-});
+//Calling Main function
+main().catch((err) => console.log(err));
 
-//Render Login Page
-app.get("/login", (req, res) => {
-  res.render("login");
-});
+//Declaring Main function
+async function main() {
+  //Connecting to MongoDB
+  const url = "mongodb://127.0.0.1:27017/";
+  const Path = "userDB";
+  await mongoose.connect(url + Path);
 
-//Render Register Page
-app.get("/register", (req, res) => {
-  res.render("register");
-});
+  //Render Home Page
+  app.get("/", (req, res) => {
+    res.render("home");
+  });
 
-app.listen(3000, () => {
-  console.log("Server running at port 3000");
-});
+  //Render Login Page
+  app.get("/login", (req, res) => {
+    res.render("login");
+  });
+
+  //Render Register Page
+  app.get("/register", (req, res) => {
+    res.render("register");
+  });
+
+  app.listen(3000, () => {
+    console.log("Server running at port 3000");
+  });
+}
