@@ -23,6 +23,19 @@ async function main() {
   const Path = "userDB";
   await mongoose.connect(url + Path);
 
+  //////////////////////////////  MongoDB Schema and Model /////////////////////////////
+
+  // User Schema
+  const userSchema = new mongoose.Schema({
+    email: String,
+    password: String,
+  });
+
+  // User Model
+  const User = new mongoose.model("User", userSchema);
+
+  //////////////////////////////////////  App.Get //////////////////////////////////////
+
   //Render Home Page
   app.get("/", (req, res) => {
     res.render("home");
@@ -37,6 +50,25 @@ async function main() {
   app.get("/register", (req, res) => {
     res.render("register");
   });
+
+  //////////////////////////////////////  App.Post /////////////////////////////////////
+
+  app.post("/register", (req, res) => {
+    // Creating new User in DataBase
+    const newUser = new User({
+      email: req.body.username,
+      password: req.body.password,
+    })
+      .save()
+      .then(() => {
+        res.redirect("/login");
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  });
+
+  //////////////////////////////////////  App.Listen ///////////////////////////////////
 
   app.listen(3000, () => {
     console.log("Server running at port 3000");
