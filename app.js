@@ -1,9 +1,10 @@
-/////////////////// Level 2 - Encryption ///////////////////
+////////////////////////// Level 3 - Hashing with md5 /////////////////////////
 require("dotenv").config();
 const express = require("express");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
 const encrypt = require("mongoose-encryption");
+const md5= require("md5");
 
 const app = express();
 
@@ -34,13 +35,7 @@ async function main() {
     password: String,
   });
 
-  // Adding encryption using mongoose-encrption Secret String
-  userSchema.plugin(encrypt, {
-    secret: process.env.SECRET,
-    encryptedFields: ["password"],
-  });
-
-  // User Model
+    // User Model
   const User = new mongoose.model("User", userSchema);
 
   //////////////////////////////////////  App.Get //////////////////////////////////////
@@ -67,7 +62,7 @@ async function main() {
     // Creating new User in DataBase
     const newUser = new User({
       email: req.body.username,
-      password: req.body.password,
+      password: md5(req.body.password),      //Hashing the password with md5
     })
       .save()
       .then(() => {
@@ -81,7 +76,7 @@ async function main() {
   // post route for login page
   app.post("/login", (req, res) => {
     const username = req.body.username;
-    const password = req.body.password;
+    const password = md5(req.body.password); //Hashing the password with md5
 
     // Find in the database
     User.findOne({ email: username }, (err, foundUser) => {
