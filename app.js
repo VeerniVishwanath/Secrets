@@ -53,6 +53,7 @@ async function main() {
 
   //////////////////////////////////////  App.Post /////////////////////////////////////
 
+  // Post route for register page
   app.post("/register", (req, res) => {
     // Creating new User in DataBase
     const newUser = new User({
@@ -61,11 +62,30 @@ async function main() {
     })
       .save()
       .then(() => {
-        res.redirect("/login");
+        res.render("secrets");
       })
       .catch((err) => {
         console.log(err);
       });
+  });
+
+  // post route for login page
+  app.post("/login", (req, res) => {
+    const username = req.body.username;
+    const password = req.body.password;
+
+    // Find in the database
+    User.findOne({ email: username }, (err, foundUser) => {
+      if (!err) {
+        if (foundUser) {
+          if (foundUser.password === password) {
+            res.render("secrets");
+          }
+        }
+      } else {
+        console.log(err);
+      }
+    });
   });
 
   //////////////////////////////////////  App.Listen ///////////////////////////////////
