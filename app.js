@@ -1,5 +1,5 @@
 /////////////////// Level 2 - Encryption ///////////////////
-
+require("dotenv").config();
 const express = require("express");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
@@ -35,8 +35,10 @@ async function main() {
   });
 
   // Adding encryption using mongoose-encrption Secret String
-  const secret = "thisisaverylongstring";
-  userSchema.plugin(encrypt, { secret: secret, encryptedFields: ["password"] });
+  userSchema.plugin(encrypt, {
+    secret: process.env.SECRET,
+    encryptedFields: ["password"],
+  });
 
   // User Model
   const User = new mongoose.model("User", userSchema);
