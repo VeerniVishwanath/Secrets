@@ -1,3 +1,5 @@
+///////////////////Level 1 - Username and Password Only///////////////////
+
 const express = require("express");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
