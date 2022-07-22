@@ -1,8 +1,9 @@
-///////////////////Level 1 - Username and Password Only///////////////////
+/////////////////// Level 2 - Encryption ///////////////////
 
 const express = require("express");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
+const encrypt = require("mongoose-encryption");
 
 const app = express();
 
@@ -32,6 +33,10 @@ async function main() {
     email: String,
     password: String,
   });
+
+  // Adding encryption using mongoose-encrption Secret String
+  const secret = "thisisaverylongstring";
+  userSchema.plugin(encrypt, { secret: secret, encryptedFields: ["password"] });
 
   // User Model
   const User = new mongoose.model("User", userSchema);
