@@ -1,10 +1,10 @@
-////////////////////////// Level 3 - Hashing with md5 /////////////////////////
+////////////////// Level 4 - Hashing and Salting with bcrypt /////////////////
 require("dotenv").config();
 const express = require("express");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const encrypt = require("mongoose-encryption");
-const md5= require("md5");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 const app = express();
 
@@ -35,7 +35,7 @@ async function main() {
     password: String,
   });
 
-    // User Model
+  // User Model
   const User = new mongoose.model("User", userSchema);
 
   //////////////////////////////////////  App.Get //////////////////////////////////////
@@ -59,32 +59,40 @@ async function main() {
 
   // Post route for register page
   app.post("/register", (req, res) => {
-    // Creating new User in DataBase
-    const newUser = new User({
-      email: req.body.username,
-      password: md5(req.body.password),      //Hashing the password with md5
-    })
-      .save()
-      .then(() => {
-        res.render("secrets");
+    bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
+      // Creating new User in DataBase
+      const newUser = new User({
+        email: req.body.username,
+        password: hash,
       })
-      .catch((err) => {
-        console.log(err);
-      });
+        .save()
+        .then(() => {
+          res.render("secrets");
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+    });
   });
 
   // post route for login page
   app.post("/login", (req, res) => {
     const username = req.body.username;
-    const password = md5(req.body.password); //Hashing the password with md5
+    const password = req.body.password;
 
     // Find in the database
     User.findOne({ email: username }, (err, foundUser) => {
       if (!err) {
         if (foundUser) {
-          if (foundUser.password === password) {
-            res.render("secrets");
-          }
+          bcrypt.compare(
+            req.body.password,
+            foundUser.password,
+            (err, result) => {
+              if (result) {
+                res.render("secrets");
+              }
+            }
+          );
         }
       } else {
         console.log(err);
