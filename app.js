@@ -1,10 +1,9 @@
-////////////////// Level 4 - Hashing and Salting with bcrypt /////////////////
+////////////////// Level 4.1 - Hashing and Salting with argon2 /////////////////
 require("dotenv").config();
 const express = require("express");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
-const saltRounds = 10;
+const argon2 = require("argon2");
 
 const app = express();
 
@@ -58,12 +57,12 @@ async function main() {
   //////////////////////////////////////  App.Post /////////////////////////////////////
 
   // Post route for register page
-  app.post("/register", (req, res) => {
-    bcrypt.hash(req.body.password, saltRounds, (err, hash) => {
+  app.post("/register", async (req, res) => {
+    try {
       // Creating new User in DataBase
       const newUser = new User({
         email: req.body.username,
-        password: hash,
+        password: await argon2.hash(req.body.password),
       })
         .save()
         .then(() => {
@@ -72,7 +71,9 @@ async function main() {
         .catch((err) => {
           console.log(err);
         });
-    });
+    } catch (err) {
+      console.log(err);
+    }
   });
 
   // post route for login page
@@ -81,18 +82,16 @@ async function main() {
     const password = req.body.password;
 
     // Find in the database
-    User.findOne({ email: username }, (err, foundUser) => {
+    User.findOne({ email: username }, async (err, foundUser) => {
       if (!err) {
         if (foundUser) {
-          bcrypt.compare(
-            req.body.password,
-            foundUser.password,
-            (err, result) => {
-              if (result) {
-                res.render("secrets");
-              }
+          try {
+            if (await argon2.verify(foundUser.password, password)) {
+              res.render("secrets");
             }
-          );
+          } catch (err) {
+            console.log(err);
+          }
         }
       } else {
         console.log(err);
