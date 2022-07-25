@@ -1,9 +1,11 @@
-////////////////// Level 4.1 - Hashing and Salting with argon2 /////////////////
+////////////////// Level 5 - Cookies and Sessions /////////////////
 require("dotenv").config();
 const express = require("express");
 const ejs = require("ejs");
 const mongoose = require("mongoose");
-const argon2 = require("argon2");
+const passport = require("passport");
+const passportLocalMongoose = require("passport-local-mongoose");
+const session = require("express-session");
 
 const app = express();
 
@@ -15,6 +17,20 @@ app.use(express.static("public"));
 
 //Setting View Engine to use EJS
 app.set("view engine", "ejs");
+
+// Initialise Session
+app.use(
+  session({
+    secret: "Our little secret.",
+    resave: false,
+    saveUninitialized: false,
+  })
+);
+
+//Initialise Passport
+app.use(passport.initialize());
+//Make app use passport to setup our session
+app.use(passport.session());
 
 //Calling Main function
 main().catch((err) => console.log(err));
@@ -34,8 +50,18 @@ async function main() {
     password: String,
   });
 
+  //use passportLocalMongoose in userSchema as a plugin
+  userSchema.plugin(passportLocalMongoose);
+
   // User Model
   const User = new mongoose.model("User", userSchema);
+
+  //simplified Passport local configurations
+  // CHANGE: USE "createStrategy" INSTEAD OF "authenticate"
+  passport.use(User.createStrategy());
+
+  passport.serializeUser(User.serializeUser());
+  passport.deserializeUser(User.deserializeUser());
 
   //////////////////////////////////////  App.Get //////////////////////////////////////
 
@@ -54,48 +80,55 @@ async function main() {
     res.render("register");
   });
 
+  //Render Secrets Page
+  app.get("/secrets", (req, res) => {
+    if (req.isAuthenticated()) {
+      res.render("secrets");
+    } else {
+      res.render("login");
+    }
+  });
+
+  //Logout Route
+  app.get("/logout", (req, res) => {
+    req.logout((err) => {
+      if (!err) {
+        res.redirect("/login");
+      } else {
+        return next(err);
+      }
+    });
+  });
+
   //////////////////////////////////////  App.Post /////////////////////////////////////
 
   // Post route for register page
-  app.post("/register", async (req, res) => {
-    try {
-      // Creating new User in DataBase
-      const newUser = new User({
-        email: req.body.username,
-        password: await argon2.hash(req.body.password),
-      })
-        .save()
-        .then(() => {
-          res.render("secrets");
-        })
-        .catch((err) => {
+  app.post("/register", (req, res) => {
+    User.register(
+      { username: req.body.username },
+      req.body.password,
+      (err, user) => {
+        if (!err) {
+          passport.authenticate("local")(req, res, () => {
+            res.redirect("/secrets");
+          });
+        } else {
           console.log(err);
-        });
-    } catch (err) {
-      console.log(err);
-    }
+          res.redirect("/register");
+        }
+      }
+    );
   });
 
   // post route for login page
   app.post("/login", (req, res) => {
-    const username = req.body.username;
-    const password = req.body.password;
+    const newUser = new User({
+      username: req.body.username,
+      password: req.body.password,
+    });
 
-    // Find in the database
-    User.findOne({ email: username }, async (err, foundUser) => {
-      if (!err) {
-        if (foundUser) {
-          try {
-            if (await argon2.verify(foundUser.password, password)) {
-              res.render("secrets");
-            }
-          } catch (err) {
-            console.log(err);
-          }
-        }
-      } else {
-        console.log(err);
-      }
+    passport.authenticate("local")(req, res, () => {
+      res.render("secrets");
     });
   });
 
