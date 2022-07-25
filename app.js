@@ -1,4 +1,4 @@
-////////////////// Level 5 - Cookies and Sessions /////////////////
+////////////////// Level 6 - Google OAuth 2.0 Authentication /////////////////
 require("dotenv").config();
 const express = require("express");
 const ejs = require("ejs");
@@ -6,6 +6,8 @@ const mongoose = require("mongoose");
 const passport = require("passport");
 const passportLocalMongoose = require("passport-local-mongoose");
 const session = require("express-session");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const findOrCreate = require("mongoose-findorcreate");
 
 const app = express();
 
@@ -48,10 +50,13 @@ async function main() {
   const userSchema = new mongoose.Schema({
     email: String,
     password: String,
+    googleId: String,
   });
 
   //use passportLocalMongoose in userSchema as a plugin
   userSchema.plugin(passportLocalMongoose);
+  //Use findOrCreate as a plugin in userSchema
+  userSchema.plugin(findOrCreate);
 
   // User Model
   const User = new mongoose.model("User", userSchema);
@@ -60,8 +65,39 @@ async function main() {
   // CHANGE: USE "createStrategy" INSTEAD OF "authenticate"
   passport.use(User.createStrategy());
 
-  passport.serializeUser(User.serializeUser());
-  passport.deserializeUser(User.deserializeUser());
+  passport.serializeUser(function (user, cb) {
+    process.nextTick(function () {
+      return cb(null, {
+        id: user.id,
+        username: user.username,
+        picture: user.picture,
+      });
+    });
+  });
+
+  passport.deserializeUser(function (user, cb) {
+    process.nextTick(function () {
+      return cb(null, user);
+    });
+  });
+
+  // Configuring Strategy
+
+  //Google Strategy
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: "http://localhost:3000/auth/google/secrets",
+      },
+      function (accessToken, refreshToken, profile, cb) {
+        User.findOrCreate({ googleId: profile.id }, function (err, user) {
+          return cb(err, user);
+        });
+      }
+    )
+  );
 
   //////////////////////////////////////  App.Get //////////////////////////////////////
 
@@ -69,6 +105,22 @@ async function main() {
   app.get("/", (req, res) => {
     res.render("home");
   });
+
+  //To Authenticate using google
+  app.get(
+    "/auth/google",
+    passport.authenticate("google", { scope: ["profile"] })
+  );
+
+  //a Callback from google after it has authenticated
+  app.get(
+    "/auth/google/secrets",
+    passport.authenticate("google", { failureRedirect: "/login" }),
+    function (req, res) {
+      // Successful authentication, redirect to secrets.
+      res.redirect("/secrets");
+    }
+  );
 
   //Render Login Page
   app.get("/login", (req, res) => {
