@@ -9,33 +9,32 @@ If you would like to see the completed source code for each lesson then `git clo
 
 Then you can use `git log` to see all the commits. You should see something like this:
 
-commit 4132d20019bc1ebaed0fc0512c7abaaf5778af2b
+commit 4132d20019bc1ebaed0fc0512c7abaaf5778af2b\
 Level 6 - Google OAuth 2.0 Authentication
 
-commit e247ea71c0659202d44eb96fc3011f9bf7e25e6c
+commit e247ea71c0659202d44eb96fc3011f9bf7e25e6c\
 Level 5 - Cookies and Sessions
 
-commit 97bdd55535c7c6fb61187b5f7b84331ee4983d1c
+commit 97bdd55535c7c6fb61187b5f7b84331ee4983d1c\
 Level 4.1 - Hashing and Salting with argon2
 
-commit 41a40326ef1519d8ff887ed0bb4fd824a6ab3a4a
-Author: Vishwanath Veeri <vishwanath.veerni@gmail.com>
+commit 41a40326ef1519d8ff887ed0bb4fd824a6ab3a4a\
 Level 4 - Hashing and Salting with bcrypt
 
-commit 974b779b7da417eaf06a65ebe1c01bbfb3d85f07
+commit 974b779b7da417eaf06a65ebe1c01bbfb3d85f07\
 Level 3 - Hashing with md5
 
-commit 15d4e69dc49b065b53b5edf673b87279af577a39
+commit 15d4e69dc49b065b53b5edf673b87279af577a39\
 Level 2 - Encryption
 
-commit a9865d3076cef7f388c6b4c25f509dc5f0e72584
+commit a9865d3076cef7f388c6b4c25f509dc5f0e72584\
 Level 1 - Username and Password Only
 
 If you would like to see the code after Level 1 - Username and Password Only for example, you can simply type:
 
 `git checkout a9865d3076cef7f388c6b4c25f509dc5f0e72584 .`
 
-into the Hyper terminal.
+into the terminal.
 
 NOTE: the dot at the end is very important, don't miss it out.
 
