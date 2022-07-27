@@ -23,7 +23,7 @@ app.set("view engine", "ejs");
 // Initialise Session
 app.use(
   session({
-    secret: "Our little secret.",
+    secret: process.env.SECRET,
     resave: false,
     saveUninitialized: false,
   })
@@ -51,6 +51,7 @@ async function main() {
     email: String,
     password: String,
     googleId: String,
+    secret: String,
   });
 
   //use passportLocalMongoose in userSchema as a plugin
@@ -134,11 +135,15 @@ async function main() {
 
   //Render Secrets Page
   app.get("/secrets", (req, res) => {
-    if (req.isAuthenticated()) {
-      res.render("secrets");
-    } else {
-      res.render("login");
-    }
+    User.find({ secret: { $ne: null } }, (err, foundUsers) => {
+      if (!err) {
+        if (foundUsers) {
+          res.render("secrets", { usersWithSecrets: foundUsers });
+        }
+      } else {
+        console.log(err);
+      }
+    });
   });
 
   //Logout Route
@@ -150,6 +155,15 @@ async function main() {
         return next(err);
       }
     });
+  });
+
+  // submit get route
+  app.get("/submit", (req, res) => {
+    if (req.isAuthenticated()) {
+      res.render("submit");
+    } else {
+      res.render("login");
+    }
   });
 
   //////////////////////////////////////  App.Post /////////////////////////////////////
@@ -180,10 +194,26 @@ async function main() {
     });
 
     passport.authenticate("local")(req, res, () => {
-      res.render("secrets");
+      res.redirect("/secrets");
     });
   });
 
+  // submit post route
+  app.post("/submit", (req, res) => {
+    const submittedSecret = req.body.secret;
+    User.findById(req.user.id, (err, foundUser) => {
+      if (!err) {
+        if (foundUser) {
+          foundUser.secret = submittedSecret;
+          foundUser.save(() => {
+            res.redirect("/secrets");
+          });
+        }
+      } else {
+        console.log(err);
+      }
+    });
+  });
   //////////////////////////////////////  App.Listen ///////////////////////////////////
 
   app.listen(3000, () => {
